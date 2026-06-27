@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { signOut } from '@/features/auth/hooks/useAuth'
+import { useSignOut } from '@/features/auth/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/AuthContext'
@@ -34,6 +34,7 @@ function getInitials(email: string | null, displayName: string | null): string {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useAuth()
   const { isAdmin, role } = useRole()
+  const signOut = useSignOut()
 
   return (
     <header className="flex min-h-14 shrink-0 items-center justify-between border-b bg-background px-4 py-2 lg:px-6">

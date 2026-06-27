@@ -5,6 +5,7 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth'
+import { useNavigate } from 'react-router-dom'
 import { assignViewerRole } from '@/lib/auth-api'
 import { auth } from '@/lib/firebase'
 import type { ApiError } from '@/types'
@@ -88,11 +89,17 @@ export async function signUp(
   }
 }
 
-export async function signOut(): Promise<void> {
-  try {
-    await firebaseSignOut(auth)
-    window.location.assign('/login')
-  } catch (error) {
-    throw mapFirebaseAuthError(error)
+export function useSignOut() {
+  const navigate = useNavigate()
+
+  const signOut = async (): Promise<void> => {
+    try {
+      await firebaseSignOut(auth)
+      navigate('/login')
+    } catch (error) {
+      throw mapFirebaseAuthError(error)
+    }
   }
+
+  return signOut
 }

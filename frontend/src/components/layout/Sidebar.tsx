@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { signOut } from '@/features/auth/hooks/useAuth'
+import { useSignOut } from '@/features/auth/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/AuthContext'
@@ -60,6 +60,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation()
   const { user } = useAuth()
   const { isAdmin, role } = useRole()
+  const signOut = useSignOut()
 
   const visibleNavItems = navItems
 
