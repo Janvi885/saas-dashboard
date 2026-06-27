@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
+import { RootRedirect } from '@/components/shared/RootRedirect'
 import { RoleGuard } from '@/components/shared/RoleGuard'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import NewProductPage from '@/pages/products/NewProductPage'
@@ -13,7 +14,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/login',

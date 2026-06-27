@@ -30,6 +30,7 @@ import { RevenueChart } from '@/features/dashboard/components/RevenueChart'
 import { useAnalytics } from '@/features/dashboard/hooks/useAnalytics'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useRole } from '@/hooks/useRole'
+import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 
 export default function DashboardPage() {
@@ -136,9 +137,11 @@ export default function DashboardPage() {
               {productsError.message}
             </p>
           ) : productsLoading ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Loading products...
-            </p>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-10 w-full" />
+              ))}
+            </div>
           ) : recentProducts.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               No products yet. Add your first product to get started.
