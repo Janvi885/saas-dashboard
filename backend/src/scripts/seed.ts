@@ -1,8 +1,11 @@
 import 'dotenv/config'
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, Timestamp } from 'firebase-admin/firestore'
 import { FirebaseAuthError } from 'firebase-admin/auth'
 import { adminAuth, adminDb } from '../config/firebase'
 import type { ProductCategory, ProductStatus } from '../types'
+
+const SEED_META_DOC = 'meta/seed'
+const SEED_VERSION = 1
 
 type SeedUser = {
   email: string
@@ -16,75 +19,226 @@ type SeedProduct = {
   category: ProductCategory
   price: number
   status: ProductStatus
-  description?: string
-  sku?: string
-  stock?: number
+  description: string
+  sku: string
+  stock: number
 }
 
-const ADMIN_USER: SeedUser = {
-  email: 'admin@test.com',
-  password: 'Admin123!',
-  displayName: 'Admin User',
-  role: 'admin',
-}
-
-const VIEWER_USER: SeedUser = {
-  email: 'viewer@test.com',
-  password: 'Viewer123!',
-  displayName: 'Viewer User',
-  role: 'viewer',
-}
+const SEED_USERS: SeedUser[] = [
+  {
+    email: 'admin@test.com',
+    password: 'Admin123!',
+    displayName: 'Admin User',
+    role: 'admin',
+  },
+  {
+    email: 'viewer@test.com',
+    password: 'Viewer123!',
+    displayName: 'Viewer User',
+    role: 'viewer',
+  },
+]
 
 const SEED_PRODUCTS: SeedProduct[] = [
   {
-    name: 'Wireless Headphones',
-    category: 'Electronics',
-    price: 149.99,
+    name: 'Pro Analytics Suite',
+    category: 'Software',
+    price: 299.99,
     status: 'active',
-    sku: 'WH-001',
-    stock: 42,
+    sku: 'SW-001',
+    stock: 500,
     description:
-      'Premium noise-cancelling over-ear headphones with 30-hour battery life and crystal-clear audio for work and travel.',
+      'Advanced analytics dashboard with real-time KPIs, custom reports, and team-wide data visibility for growing SaaS businesses.',
   },
   {
-    name: 'Cotton T-Shirt',
-    category: 'Clothing',
-    price: 29.99,
+    name: 'Basic Storage Plan',
+    category: 'Software',
+    price: 19.99,
     status: 'active',
-    sku: 'CT-002',
+    sku: 'SW-002',
+    stock: 999,
+    description:
+      'Affordable cloud storage tier with 50 GB capacity, automatic backups, and seamless file sharing for small teams.',
+  },
+  {
+    name: 'Team Collaboration Hub',
+    category: 'Software',
+    price: 49.99,
+    status: 'active',
+    sku: 'SW-003',
+    stock: 750,
+    description:
+      'Centralized workspace for chat, tasks, and document collaboration with role-based access controls.',
+  },
+  {
+    name: 'Enterprise CRM Platform',
+    category: 'Software',
+    price: 999.99,
+    status: 'inactive',
+    sku: 'SW-004',
+    stock: 100,
+    description:
+      'Full-featured CRM with pipeline management, automated workflows, and enterprise-grade security compliance.',
+  },
+  {
+    name: 'Smart Inventory Tracker',
+    category: 'Software',
+    price: 79.99,
+    status: 'active',
+    sku: 'SW-005',
+    stock: 400,
+    description:
+      'Real-time inventory monitoring with low-stock alerts, barcode scanning integration, and multi-location support.',
+  },
+  {
+    name: 'Wireless Ergonomic Keyboard',
+    category: 'Electronics',
+    price: 129.99,
+    status: 'active',
+    sku: 'EL-001',
+    stock: 85,
+    description:
+      'Split ergonomic keyboard with Bluetooth connectivity, adjustable tilt, and whisper-quiet mechanical switches.',
+  },
+  {
+    name: '4K Webcam Pro',
+    category: 'Electronics',
+    price: 89.99,
+    status: 'active',
+    sku: 'EL-002',
     stock: 120,
     description:
-      'Soft, breathable 100% organic cotton tee with a relaxed fit. Available in multiple colors for everyday comfort.',
+      'Ultra HD webcam with auto-focus, built-in ring light, and noise-reducing dual microphones for professional video calls.',
   },
   {
-    name: 'Organic Coffee Beans',
+    name: 'USB-C Docking Station',
+    category: 'Electronics',
+    price: 159.99,
+    status: 'inactive',
+    sku: 'EL-003',
+    stock: 45,
+    description:
+      '12-in-1 docking hub with dual 4K display support, 100W power delivery, and gigabit Ethernet connectivity.',
+  },
+  {
+    name: 'Premium Cotton Hoodie',
+    category: 'Clothing',
+    price: 59.99,
+    status: 'active',
+    sku: 'CL-001',
+    stock: 200,
+    description:
+      'Soft heavyweight cotton hoodie with embroidered logo, kangaroo pocket, and unisex relaxed fit.',
+  },
+  {
+    name: 'Developer Merch Pack',
+    category: 'Clothing',
+    price: 34.99,
+    status: 'active',
+    sku: 'CL-002',
+    stock: 150,
+    description:
+      'Curated bundle including a branded tee, sticker sheet, and enamel pin — perfect for conference swag or team gifts.',
+  },
+  {
+    name: 'Organic Energy Bars (12pk)',
+    category: 'Food',
+    price: 24.99,
+    status: 'active',
+    sku: 'FD-001',
+    stock: 300,
+    description:
+      'Plant-based energy bars made with organic oats, dark chocolate, and almond butter. No artificial sweeteners.',
+  },
+  {
+    name: 'Artisan Dark Roast Coffee',
     category: 'Food',
     price: 18.5,
     status: 'inactive',
-    sku: 'FC-003',
+    sku: 'FD-002',
     stock: 0,
     description:
-      'Single-origin Arabica beans, fair-trade certified and medium-roasted for a smooth, balanced cup with notes of chocolate and caramel.',
+      'Small-batch dark roast beans sourced from Colombia with rich chocolate and nutty undertones.',
   },
   {
-    name: 'Project Management SaaS',
-    category: 'Software',
-    price: 49.0,
+    name: 'Minimalist Desk Organizer',
+    category: 'Home',
+    price: 39.99,
     status: 'active',
-    sku: 'SW-004',
-    stock: 999,
+    sku: 'HM-001',
+    stock: 175,
     description:
-      'All-in-one project management platform with kanban boards, time tracking, and team collaboration tools built for growing SaaS teams.',
+      'Bamboo desk caddy with compartments for pens, cables, and devices to keep your workspace clutter-free.',
   },
   {
-    name: 'Desk Lamp',
+    name: 'LED Monitor Light Bar',
     category: 'Home',
     price: 64.99,
     status: 'active',
-    sku: 'HM-005',
-    stock: 28,
+    sku: 'HM-002',
+    stock: 90,
     description:
-      'Adjustable LED desk lamp with warm-to-cool color temperature control and a sleek minimalist design for any home office.',
+      'Screen-mounted LED light bar with adjustable color temperature to reduce eye strain during long work sessions.',
+  },
+  {
+    name: 'Cloud Architecture Handbook',
+    category: 'Books',
+    price: 49.99,
+    status: 'active',
+    sku: 'BK-001',
+    stock: 250,
+    description:
+      'Comprehensive guide to designing scalable cloud-native systems with practical patterns and real-world case studies.',
+  },
+  {
+    name: 'TypeScript Mastery Guide',
+    category: 'Books',
+    price: 29.99,
+    status: 'inactive',
+    sku: 'BK-002',
+    stock: 60,
+    description:
+      'Deep dive into advanced TypeScript patterns, generics, and type-safe API design for modern web applications.',
+  },
+  {
+    name: 'Custom API Integration Kit',
+    category: 'Other',
+    price: 199.99,
+    status: 'active',
+    sku: 'OT-001',
+    stock: 80,
+    description:
+      'Pre-built connectors and webhook templates for integrating third-party services into your SaaS dashboard.',
+  },
+  {
+    name: 'Starter Onboarding Bundle',
+    category: 'Other',
+    price: 9.99,
+    status: 'active',
+    sku: 'OT-002',
+    stock: 999,
+    description:
+      'Entry-level package with guided setup wizard, sample data import, and email templates to launch quickly.',
+  },
+  {
+    name: 'Advanced Reporting Module',
+    category: 'Software',
+    price: 149.99,
+    status: 'active',
+    sku: 'SW-006',
+    stock: 320,
+    description:
+      'Add-on module for scheduled PDF exports, custom chart builders, and cross-team report sharing.',
+  },
+  {
+    name: 'White-Label Dashboard Theme',
+    category: 'Software',
+    price: 449.99,
+    status: 'inactive',
+    sku: 'SW-007',
+    stock: 50,
+    description:
+      'Fully customizable white-label theme with brand colors, logo placement, and client-facing portal support.',
   },
 ]
 
@@ -93,6 +247,18 @@ function isEmailAlreadyExists(error: unknown): boolean {
     error instanceof FirebaseAuthError &&
     error.code === 'auth/email-already-exists'
   )
+}
+
+function randomDateWithinLastSixMonths(): Date {
+  const now = Date.now()
+  const sixMonthsMs = 180 * 24 * 60 * 60 * 1000
+  const start = now - sixMonthsMs
+  return new Date(start + Math.random() * (now - start))
+}
+
+async function hasSeedRun(): Promise<boolean> {
+  const doc = await adminDb.collection('meta').doc('seed').get()
+  return doc.exists
 }
 
 async function ensureUser(user: SeedUser): Promise<string> {
@@ -105,10 +271,12 @@ async function ensureUser(user: SeedUser): Promise<string> {
       displayName: user.displayName,
     })
     uid = record.uid
+    console.log(`  Created auth user: ${user.email}`)
   } catch (error) {
     if (isEmailAlreadyExists(error)) {
       const existing = await adminAuth.getUserByEmail(user.email)
       uid = existing.uid
+      console.log(`  Auth user already exists: ${user.email}`)
     } else {
       throw error
     }
@@ -129,47 +297,74 @@ async function ensureUser(user: SeedUser): Promise<string> {
       { merge: true },
     )
 
+  console.log(`  Set role "${user.role}" and /users/${uid} document`)
   return uid
 }
 
 async function seedProducts(createdBy: string): Promise<void> {
   const collection = adminDb.collection('products')
-  const existing = await collection.limit(1).get()
-
-  if (!existing.empty) {
-    console.log(' Products collection already has data — skipping product seed')
-    return
-  }
-
-  const now = FieldValue.serverTimestamp()
+  console.log(`  Seeding ${SEED_PRODUCTS.length} products...`)
 
   for (const product of SEED_PRODUCTS) {
+    const createdAt = Timestamp.fromDate(randomDateWithinLastSixMonths())
+
     await collection.add({
       ...product,
-      createdAt: now,
-      updatedAt: now,
+      createdAt,
+      updatedAt: createdAt,
       createdBy,
     })
   }
 
-  console.log(`✅ Seeded ${SEED_PRODUCTS.length} products into Firestore`)
+  const activeCount = SEED_PRODUCTS.filter((p) => p.status === 'active').length
+  const categories = new Set(SEED_PRODUCTS.map((p) => p.category))
+
+  console.log(`  Products seeded: ${SEED_PRODUCTS.length} total`)
+  console.log(`  Active: ${activeCount}, Inactive: ${SEED_PRODUCTS.length - activeCount}`)
+  console.log(`  Categories: ${categories.size} (${[...categories].join(', ')})`)
+}
+
+async function markSeedComplete(): Promise<void> {
+  await adminDb.collection('meta').doc('seed').set({
+    seededAt: FieldValue.serverTimestamp(),
+    version: SEED_VERSION,
+  })
+  console.log('  Wrote /meta/seed marker document')
 }
 
 async function seed(): Promise<void> {
-  const adminUid = await ensureUser(ADMIN_USER)
-  console.log('✅ Admin user ready: admin@test.com')
+  console.log('🌱 Starting database seed...')
 
-  await ensureUser(VIEWER_USER)
-  console.log('✅ Viewer user ready: viewer@test.com')
+  if (await hasSeedRun()) {
+    console.log('⏭️  Seed already ran (found /meta/seed) — skipping')
+    return
+  }
 
+  console.log('\n👤 Creating test users...')
+  let adminUid = ''
+
+  for (const user of SEED_USERS) {
+    const uid = await ensureUser(user)
+    if (user.role === 'admin') {
+      adminUid = uid
+    }
+  }
+
+  console.log('\n📦 Creating sample products...')
   await seedProducts(adminUid)
 
-  console.log('🌱 Seed complete')
+  console.log('\n📝 Recording seed metadata...')
+  await markSeedComplete()
+
+  console.log('\n✅ Seed complete!')
+  console.log('   Login credentials:')
+  console.log('   Admin  → admin@test.com  / Admin123!')
+  console.log('   Viewer → viewer@test.com / Viewer123!')
 }
 
 seed()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error('Seed failed:', error)
+    console.error('\n❌ Seed failed:', error)
     process.exit(1)
   })
