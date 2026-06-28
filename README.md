@@ -83,13 +83,26 @@ Firestore  (/products, /users, /rate_limits)
 
 ## Quick Start
 
-### Prerequisites
+### What you need installed first
 
-- Node.js 20+
-- npm
-- Firebase project with **Email/Password Auth** and **Firestore** enabled
+Before anything, make sure these are on your computer:
 
-### 1. Clone and install
+1. **Node.js** — Download from https://nodejs.org → click the big green "LTS" button → install it like any normal app
+   - To check it worked, open Terminal (Mac) or Command Prompt (Windows) and type: `node --version`
+   - You should see something like: `v20.0.0` ✅
+
+2. **Git** — Download from https://git-scm.com/downloads
+   - To check it worked, type: `git --version` ✅
+
+3. **A Firebase account** — Free at https://firebase.google.com (just sign in with any Google account)
+
+That's all you need. No other software required.
+
+---
+
+### Step 1 — Download the project
+
+Open Terminal (Mac) or Command Prompt (Windows) and run:
 
 ```bash
 git clone https://github.com/Janvi885/saas-dashboard.git
@@ -97,44 +110,113 @@ cd saas-dashboard
 npm run install:all
 ```
 
-### 2. Firebase setup
+This downloads the code and installs everything automatically. It will take 1-2 minutes. ☕
 
-1. Create a project in the [Firebase Console](https://console.firebase.google.com/).
-2. Enable **Authentication → Email/Password**.
-3. Create a **Firestore** database (production mode is fine).
-4. Register a **Web app** and copy config values for the frontend.
-5. Generate a **Service account** private key for the backend.
-6. Deploy rules and indexes:
+---
 
-   ```bash
-   firebase deploy --only firestore:rules,firestore:indexes
-   ```
+### Step 2 — Set up Firebase (one time only)
 
-   Or paste `firestore.rules` manually in the Firebase Console.
+You need a Firebase project to store data and handle logins.
 
-### 3. Environment variables
+**Create the project:**
+1. Go to https://console.firebase.google.com
+2. Click **"Add project"** → give it any name → click through the steps → click **"Create project"**
 
-Copy `backend/.env.example` → `backend/.env` and `frontend/.env.example` → `frontend/.env`. See [Environment variables](#environment-variables) below.
+**Turn on Email/Password login:**
+1. In your project, click **"Authentication"** in the left menu
+2. Click **"Get started"**
+3. Click **"Email/Password"** → toggle it ON → click **"Save"**
 
-### 4. Seed the database
+**Create the database:**
+1. Click **"Firestore Database"** in the left menu
+2. Click **"Create database"**
+3. Choose **"Start in production mode"** → click **"Next"**
+4. Pick any location → click **"Enable"**
+
+**Get your frontend config keys:**
+1. Click the ⚙️ gear icon → **"Project settings"**
+2. Scroll down to **"Your apps"**
+3. Click the **</>** (web) icon → give it a name → click **"Register app"**
+4. You will see a block of code with values like `apiKey`, `authDomain` etc. — keep this page open, you need it in Step 3.
+
+**Get your backend service account key:**
+1. Still in Project settings → click **"Service accounts"** tab
+2. Click **"Generate new private key"** → click **"Generate key"**
+3. A JSON file downloads to your computer — keep it safe, you need values from it in Step 3.
+
+**Deploy security rules (recommended):**
+
+Paste the contents of `firestore.rules` from this repo into the Firebase Console under **Firestore → Rules**, then click **Publish**. Or, if you have the Firebase CLI installed:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+---
+
+### Step 3 — Add your secret keys
+
+**For the backend:**
+
+1. Go into the `backend/` folder
+2. Find the file called `.env.example`
+3. Make a copy of it and rename the copy to `.env` (just `.env` — no ".example")
+4. Open `.env` in any text editor (Notepad, TextEdit, VS Code)
+5. Fill in the values from your Firebase service account JSON file:
+   - `FIREBASE_PROJECT_ID` → copy `"project_id"` from the JSON
+   - `FIREBASE_CLIENT_EMAIL` → copy `"client_email"` from the JSON
+   - `FIREBASE_PRIVATE_KEY` → copy the entire `"private_key"` value (keep it in quotes; use `\n` for line breaks)
+   - Leave `PORT`, `NODE_ENV`, and `FRONTEND_URL` as they are for local development
+   - `GROQ_API_KEY` is optional — leave it blank unless you want AI-generated descriptions
+6. Save the file
+
+**For the frontend:**
+
+1. Go into the `frontend/` folder
+2. Copy `.env.example` → `.env` (same as above — rename the copy to `.env`)
+3. Open `.env` in your text editor
+4. Fill in the values from the Firebase web app config block you saw in Step 2:
+   - `VITE_FIREBASE_API_KEY` → `apiKey`
+   - `VITE_FIREBASE_AUTH_DOMAIN` → `authDomain`
+   - `VITE_FIREBASE_PROJECT_ID` → `projectId`
+   - `VITE_FIREBASE_STORAGE_BUCKET` → `storageBucket`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID` → `messagingSenderId`
+   - `VITE_FIREBASE_APP_ID` → `appId`
+   - `VITE_FIREBASE_MEASUREMENT_ID` → `measurementId` (optional — leave blank if you skipped Analytics)
+   - Keep `VITE_API_BASE_URL=http://localhost:5000` for local development
+5. Save the file
+
+> Full variable reference: [Environment variables](#environment-variables) below.
+
+---
+
+### Step 4 — Load sample data
+
+Open Terminal in the `backend/` folder and run:
 
 ```bash
 cd backend
 npm run seed
 ```
 
-Creates both test users, 20 sample products, and a `/meta/seed` marker. Safe to re-run — skipped if seed already completed.
+This creates the two test users (`admin@test.com` / `viewer@test.com`) and 20 sample products. Safe to re-run — it skips if data was already seeded.
 
-### 5. Run locally
+---
 
-From the project root:
+### Step 5 — Run the app
+
+From the project root folder, run:
 
 ```bash
 npm run dev
 ```
 
-- Frontend: http://localhost:3000  
-- API health: http://localhost:5000/health  
+Then open your browser:
+
+- **Frontend:** http://localhost:3000
+- **API health check:** http://localhost:5000/health
+
+Log in with `admin@test.com` / `Admin123!` to try everything. 🎉
 
 ---
 
