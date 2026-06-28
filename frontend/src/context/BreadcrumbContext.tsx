@@ -62,21 +62,15 @@ export function buildBreadcrumbs(
   pathname: string,
   currentLabel: string | null,
 ): BreadcrumbItem[] {
-  if (pathname === '/dashboard') {
-    return [{ label: 'Dashboard' }]
+  // Top-level pages use PageHeader for the title — skip redundant breadcrumbs.
+  if (pathname === '/dashboard' || pathname === '/products') {
+    return []
   }
 
   if (pathname.startsWith('/products')) {
     const crumbs: BreadcrumbItem[] = [
-      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Products', href: '/products' },
     ]
-
-    if (pathname === '/products') {
-      crumbs.push({ label: 'Products' })
-      return crumbs
-    }
-
-    crumbs.push({ label: 'Products', href: '/products' })
 
     if (pathname === '/products/new') {
       crumbs.push({ label: 'New Product' })
@@ -90,5 +84,5 @@ export function buildBreadcrumbs(
     return crumbs
   }
 
-  return [{ label: 'Dashboard', href: '/dashboard' }]
+  return []
 }

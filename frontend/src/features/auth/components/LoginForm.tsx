@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,19 +16,21 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { FormFieldLabel } from '@/components/form/FormFieldLabel'
 import { signIn } from '@/features/auth/hooks/useAuth'
 import {
   loginSchema,
   type LoginFormData,
 } from '@/features/auth/types/auth.types'
 import type { ApiError } from '@/types'
+import { getSafeRedirectPath } from '@/utils/authRedirect'
 
 export function LoginForm() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
 
@@ -38,6 +40,8 @@ export function LoginForm() {
       email: '',
       password: '',
     },
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   const loading = form.formState.isSubmitting
@@ -47,7 +51,8 @@ export function LoginForm() {
 
     try {
       await signIn(values.email, values.password)
-      navigate('/dashboard')
+      const from = (location.state as { from?: unknown } | null)?.from
+      navigate(getSafeRedirectPath(from), { replace: true })
     } catch (error) {
       const message =
         typeof error === 'object' &&
@@ -75,18 +80,23 @@ export function LoginForm() {
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormFieldLabel
+                    label="Email"
+                    required
+                    tooltip="Required. Enter the email address for your account."
+                  />
                   <FormControl>
                     <Input
                       type="email"
                       placeholder="you@example.com"
                       autoComplete="email"
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -100,7 +110,11 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormFieldLabel
+                    label="Password"
+                    required
+                    tooltip="Required. Enter your account password (minimum 6 characters)."
+                  />
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -108,6 +122,7 @@ export function LoginForm() {
                         placeholder="Your password"
                         autoComplete="current-password"
                         className="pr-10"
+                        required
                         {...field}
                       />
                       <Button

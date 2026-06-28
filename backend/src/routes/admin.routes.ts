@@ -26,6 +26,11 @@ router.post(
     const isAdmin = callerRole === 'admin'
     const isSelf = callerUid === uid
 
+    // Non-admins may only assign viewer to their own account (sign-up flow).
+    if (!isAdmin && (requestedRole !== 'viewer' || !isSelf)) {
+      throw new AppError('Forbidden', 'INSUFFICIENT_ROLE', 403)
+    }
+
     if (requestedRole === 'admin' && !isAdmin) {
       throw new AppError(
         'Only admins can assign the admin role',

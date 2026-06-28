@@ -29,7 +29,7 @@ export async function authenticate(
   }
 
   try {
-    req.user = await adminAuth.verifyIdToken(token)
+    req.user = await adminAuth.verifyIdToken(token, true)
 
     log('info', 'Authenticated request', {
       requestId: req.id,

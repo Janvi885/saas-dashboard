@@ -33,7 +33,7 @@ import { useRole } from '@/hooks/useRole'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 
-export default function DashboardPage() {
+export default function AdminDashboardPage() {
   const { isAdmin, isViewer } = useRole()
   const { metrics, loading: metricsLoading, error: metricsError } = useAnalytics()
   const {

@@ -86,7 +86,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <LayoutDashboard className="h-5 w-5" />
             </div>
-            <h1 className="mt-3 text-lg font-bold">SaaS Dashboard</h1>
+            <h1 className="mt-3 text-lg font-bold">SaaS</h1>
+            <p className="text-xs text-muted-foreground">Product catalog</p>
           </div>
           <Button
             variant="ghost"

@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { FormFieldLabel } from '@/components/form/FormFieldLabel'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,7 +17,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -41,6 +41,8 @@ export function RegisterForm() {
       password: '',
       confirmPassword: '',
     },
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   const loading = form.formState.isSubmitting
@@ -79,18 +81,27 @@ export function RegisterForm() {
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <p className="text-xs text-muted-foreground">
+              Fields marked with <span className="text-destructive">*</span> are required.
+            </p>
+
             <FormField
               control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Display name</FormLabel>
+                  <FormFieldLabel
+                    label="Display name"
+                    required
+                    tooltip="Required. Your name as shown in the app (2–50 characters)."
+                  />
                   <FormControl>
                     <Input
                       type="text"
                       placeholder="Jane Doe"
                       autoComplete="name"
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -104,12 +115,17 @@ export function RegisterForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormFieldLabel
+                    label="Email"
+                    required
+                    tooltip="Required. A valid email address for your account."
+                  />
                   <FormControl>
                     <Input
                       type="email"
                       placeholder="you@example.com"
                       autoComplete="email"
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -123,7 +139,11 @@ export function RegisterForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormFieldLabel
+                    label="Password"
+                    required
+                    tooltip="Required. At least 8 characters with at least one number."
+                  />
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -131,6 +151,7 @@ export function RegisterForm() {
                         placeholder="At least 8 characters"
                         autoComplete="new-password"
                         className="pr-10"
+                        required
                         {...field}
                       />
                       <Button
@@ -159,7 +180,11 @@ export function RegisterForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm password</FormLabel>
+                  <FormFieldLabel
+                    label="Confirm password"
+                    required
+                    tooltip="Required. Must match the password entered above."
+                  />
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -167,6 +192,7 @@ export function RegisterForm() {
                         placeholder="Repeat your password"
                         autoComplete="new-password"
                         className="pr-10"
+                        required
                         {...field}
                       />
                       <Button

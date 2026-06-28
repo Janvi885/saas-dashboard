@@ -2,13 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { FormFieldLabel } from '@/components/form/FormFieldLabel'
 import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -31,12 +32,29 @@ import {
   showProductUpdatedToast,
 } from '@/features/products/utils/productToasts'
 import { useRole } from '@/hooks/useRole'
+import { cn } from '@/lib/utils'
 import {
   createProduct,
   generateProductDescription,
   updateProduct,
 } from '@/services/product.service'
 import type { Product } from '@/types'
+
+const FIELD_TOOLTIPS = {
+  name: 'Required. Product display name between 2 and 100 characters.',
+  category: 'Required. Choose the catalog category for this product.',
+  status: 'Required. Active products are visible in listings; inactive are hidden.',
+  price: 'Required. Enter a price in USD greater than 0 (max 999,999.99).',
+  sku: 'Optional. Alphanumeric characters and dashes only, up to 50 characters.',
+  stock: 'Optional. Whole number for inventory count (0 or greater).',
+  description:
+    'Optional. Product description for the catalog, up to 500 characters.',
+} as const
+
+const textareaClassName = cn(
+  'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive/30',
+)
 
 type ProductFormProps = {
   product?: Product
@@ -64,6 +82,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: toFormValues(product),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   const submitting = form.formState.isSubmitting
@@ -118,16 +138,28 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
+        <p className="text-xs text-muted-foreground">
+          Fields marked with <span className="text-destructive">*</span> are required.
+        </p>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
-                <FormLabel>Name</FormLabel>
+                <FormFieldLabel
+                  label="Name"
+                  required
+                  tooltip={FIELD_TOOLTIPS.name}
+                />
                 <FormControl>
-                  <Input placeholder="Product name" {...field} />
+                  <Input
+                    placeholder="Product name"
+                    required
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,7 +171,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormFieldLabel
+                  label="Category"
+                  required
+                  tooltip={FIELD_TOOLTIPS.category}
+                />
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -164,7 +200,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormFieldLabel
+                  label="Status"
+                  required
+                  tooltip={FIELD_TOOLTIPS.status}
+                />
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -186,7 +226,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price</FormLabel>
+                <FormFieldLabel
+                  label="Price"
+                  required
+                  tooltip={FIELD_TOOLTIPS.price}
+                />
                 <FormControl>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -198,6 +242,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                       min="0"
                       placeholder="0.00"
                       className="pl-7"
+                      required
                       {...field}
                       onChange={(event) =>
                         field.onChange(
@@ -219,10 +264,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             name="sku"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SKU (optional)</FormLabel>
+                <FormFieldLabel label="SKU" tooltip={FIELD_TOOLTIPS.sku} />
                 <FormControl>
                   <Input placeholder="SKU-001" {...field} />
                 </FormControl>
+                <FormDescription>Optional product identifier.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -233,7 +279,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             name="stock"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Stock (optional)</FormLabel>
+                <FormFieldLabel label="Stock" tooltip={FIELD_TOOLTIPS.stock} />
                 <FormControl>
                   <Input
                     type="number"
@@ -248,8 +294,12 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                           : Number(event.target.value),
                       )
                     }
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
                   />
                 </FormControl>
+                <FormDescription>Leave empty if not tracked.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -261,7 +311,10 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
                 <div className="flex items-center justify-between gap-2">
-                  <FormLabel>Description</FormLabel>
+                  <FormFieldLabel
+                    label="Description"
+                    tooltip={FIELD_TOOLTIPS.description}
+                  />
                   {isAdmin && (
                     <Button
                       type="button"
@@ -282,7 +335,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   <textarea
                     rows={4}
                     placeholder="Product description"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={textareaClassName}
                     {...field}
                     onChange={(event) => {
                       setAiGenerated(false)
@@ -291,9 +344,9 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   />
                 </FormControl>
                 {aiGenerated && (
-                  <p className="text-xs text-muted-foreground">
+                  <FormDescription>
                     AI-generated — review before saving
-                  </p>
+                  </FormDescription>
                 )}
                 <FormMessage />
               </FormItem>

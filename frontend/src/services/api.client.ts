@@ -79,6 +79,7 @@ axiosInstance.interceptors.request.use(
     const user = auth.currentUser
 
     if (user) {
+      // Fresh token per request; Firebase SDK caches and auto-refreshes.
       const token = await user.getIdToken()
       config.headers.Authorization = `Bearer ${token}`
     }

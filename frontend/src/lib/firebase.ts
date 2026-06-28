@@ -2,7 +2,12 @@
  * CLIENT-SIDE ONLY — never import firebase-admin here
  */
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app'
-import { getAuth, type Auth } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  getAuth,
+  setPersistence,
+  type Auth,
+} from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -21,4 +26,9 @@ const app: FirebaseApp = getApps().length
 
 export { app }
 export const auth: Auth = getAuth(app)
+
+// Firebase manages JWT refresh tokens securely in browser storage.
+// ID tokens are never placed in URLs — only sent via Authorization headers.
+void setPersistence(auth, browserLocalPersistence)
+
 export const db: Firestore = getFirestore(app)
