@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
-  Plus,
   X,
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -120,19 +119,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             )
           })}
 
-          {isAdmin && (
-            <Link to="/products/new" onClick={onClose}>
-              <Button
-                variant={
-                  location.pathname === '/products/new' ? 'secondary' : 'ghost'
-                }
-                className="w-full justify-start gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Product
-              </Button>
-            </Link>
-          )}
         </nav>
 
         <div className="space-y-3 border-t p-4">

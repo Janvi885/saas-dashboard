@@ -106,7 +106,6 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
     [filters, onFiltersChange],
   )
 
-  const activeCount = activeChips.length
   const hasSearch = Boolean(filters.search?.trim())
   const hasCategory = Boolean(filters.category && filters.category !== 'all')
   const hasStatus = Boolean(filters.status && filters.status !== 'all')
@@ -141,14 +140,7 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">Filters</p>
-        {activeCount > 0 && (
-          <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
-            +{activeCount} active
-          </Badge>
-        )}
-      </div>
+      <p className="text-sm font-medium">Filters</p>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
@@ -253,7 +245,7 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
         </Button>
       </div>
 
-      {activeCount > 0 && (
+      {activeChips.length > 0 && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {activeChips.map((chip) => (

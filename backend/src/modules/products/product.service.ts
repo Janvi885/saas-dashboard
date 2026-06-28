@@ -96,11 +96,19 @@ function sortProducts(
   })
 }
 
-/** Builds a Firestore query with equality filters and server-side ordering. */
+function hasEqualityFilters(filters: ProductFilters): boolean {
+  return (
+    Boolean(filters.category && filters.category !== 'all') ||
+    Boolean(filters.status && filters.status !== 'all')
+  )
+}
+
+/** Builds a Firestore query with optional equality filters and server-side ordering. */
 function buildFilteredQuery(
   filters: ProductFilters,
   sortBy: SortField,
   sortOrder: SortDirection,
+  withServerSort = true,
 ): Query {
   let query: Query = adminDb.collection(COLLECTION)
 
@@ -112,7 +120,11 @@ function buildFilteredQuery(
     query = query.where('status', '==', filters.status)
   }
 
-  return query.orderBy(sortBy, sortOrder)
+  if (withServerSort) {
+    return query.orderBy(sortBy, sortOrder)
+  }
+
+  return query
 }
 
 async function paginateWithFirestoreQuery(
@@ -136,22 +148,26 @@ async function paginateWithFirestoreQuery(
   return { products, total, page, pageSize, totalPages }
 }
 
-async function paginateWithInMemorySearch(
+async function paginateInMemory(
   filters: ProductFilters,
   page: number,
   pageSize: number,
   sortBy: SortField,
   sortOrder: SortDirection,
-  search: string,
+  search?: string,
 ): Promise<PaginatedProducts> {
-  const query = buildFilteredQuery(filters, sortBy, sortOrder)
+  // Avoid composite indexes (e.g. status + createdAt) by sorting in memory.
+  const query = buildFilteredQuery(filters, sortBy, sortOrder, false)
   const snapshot = await query.get()
 
   let products = snapshot.docs.map((doc) =>
     mapDocToProduct(doc.id, doc.data()),
   )
 
-  products = products.filter((product) => matchesSearch(product, search))
+  if (search?.trim()) {
+    products = products.filter((product) => matchesSearch(product, search))
+  }
+
   products = sortProducts(products, sortBy, sortOrder)
 
   const total = products.length
@@ -174,8 +190,8 @@ export async function getProducts(
     const normalized = normalizeFilters(filters)
     const { page, pageSize, sortBy, sortOrder, search } = normalized
 
-    if (search?.trim()) {
-      return paginateWithInMemorySearch(
+    if (search?.trim() || hasEqualityFilters(normalized)) {
+      return paginateInMemory(
         normalized,
         page,
         pageSize,
