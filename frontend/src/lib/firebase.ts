@@ -8,7 +8,21 @@ import {
   setPersistence,
   type Auth,
 } from 'firebase/auth'
-import { getFirestore, type Firestore } from 'firebase/firestore'
+
+const requiredEnvKeys = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_APP_ID',
+] as const
+
+for (const key of requiredEnvKeys) {
+  if (!import.meta.env[key]) {
+    throw new Error(
+      `Missing required environment variable: ${key}. Check your frontend/.env file.`,
+    )
+  }
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -30,5 +44,3 @@ export const auth: Auth = getAuth(app)
 // Firebase manages JWT refresh tokens securely in browser storage.
 // ID tokens are never placed in URLs — only sent via Authorization headers.
 void setPersistence(auth, browserLocalPersistence)
-
-export const db: Firestore = getFirestore(app)

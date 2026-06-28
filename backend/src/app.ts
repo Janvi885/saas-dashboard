@@ -7,10 +7,10 @@ import './config/firebase'
 import { errorHandler } from './middleware/errorHandler'
 import { assignRequestId } from './middleware/requestId'
 import { rateLimiter } from './middleware/rateLimiter'
-import adminRoutes from './routes/admin.routes'
-import analyticsRoutes from './routes/analytics.routes'
+import adminRoutes from './modules/admin/admin.routes'
+import analyticsRoutes from './modules/analytics/analytics.routes'
 import productRoutes from './modules/products/product.routes'
-import { notFound } from './utils/apiResponse'
+import { healthResponse, notFound } from './utils/apiResponse'
 
 export const app = express()
 
@@ -42,7 +42,7 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/admin', adminRoutes)
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date() })
+  healthResponse(res)
 })
 
 app.use((req, res) => {

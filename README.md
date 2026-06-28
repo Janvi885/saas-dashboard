@@ -1,19 +1,28 @@
-# 🗂️ SaaS Product Dashboard
+# SaaS Product Dashboard
 
-> A role-based product management dashboard with analytics, AI-assisted descriptions, and a hardened Express + Firebase backend.
+A role-based product management dashboard with analytics, AI-assisted descriptions, and a hardened Express + Firebase backend.
+
+---
 
 ## Live Demo
 
-**Local (default):** [http://localhost:3000](http://localhost:3000) | [http://localhost:5000/health](http://localhost:5000/health)
+| Environment | URL |
+|-------------|-----|
+| **Frontend (Vercel)** | [https://saas-dashboard-one-vert.vercel.app](https://saas-dashboard-one-vert.vercel.app) |
+| **API health (Render)** | [https://saas-dashboard-backend-0kwm.onrender.com/health](https://saas-dashboard-backend-0kwm.onrender.com/health) |
+| **Local frontend** | [http://localhost:3000](http://localhost:3000) |
+| **Local API** | [http://localhost:5000/health](http://localhost:5000/health) |
 
-**Deployed:** [Frontend URL] | [API Health Check URL]
+> **Vercel:** set `VITE_API_BASE_URL` to `https://saas-dashboard-backend-0kwm.onrender.com` · **Render:** set `FRONTEND_URL` to `https://saas-dashboard-one-vert.vercel.app`
 
-**Test credentials** (created by seed script):
+### Test credentials
 
-| Role   | Email             | Password    |
-|--------|-------------------|-------------|
-| Admin  | admin@test.com    | Admin123!   |
-| Viewer | viewer@test.com   | Viewer123!  |
+Created by the seed script (`npm run seed` in `backend/`):
+
+| Role   | Email             | Password   |
+|--------|-------------------|------------|
+| Admin  | admin@test.com    | Admin123!  |
+| Viewer | viewer@test.com   | Viewer123! |
 
 ---
 
@@ -23,32 +32,62 @@
 Browser
    │
    ▼
-Vite + React (port 3000)
-   │  HTTP + Bearer Token (Firebase ID JWT)
+Vite + React (SPA)
+   │  HTTPS · Authorization: Bearer <Firebase ID token>
    ▼
-Express API (port 5000)
+Express API (Node.js)
    │  Firebase Admin SDK
    ▼
-Firebase Auth + Firestore
+Firebase Auth  ──►  custom claims (role: admin | viewer)
+   │
+   ▼
+Firestore  (/products, /users, /rate_limits)
 ```
 
-**Key design decisions**
+**Request flow:** Component → Hook → Service → `api.client` → Express route → Controller → Service → Firestore.
 
-- **Separated frontend and backend** — two independent deployable services; frontend never holds service-account credentials.
-- **Server-side auth validation** — every protected route verifies JWTs with `adminAuth.verifyIdToken()` before any business logic runs.
-- **Firestore Security Rules** — second layer for direct client access; rules enforce role-based read/write even if a client bypasses the API.
-- **Feature-based structure** — `products/`, `auth/`, `dashboard/` on the frontend; `modules/products/` on the backend. Colocation over layer-only folders.
-- **Unidirectional request flow** — Component → Hook → Service → API → Controller → Service → Firestore.
+**Design principles**
+
+- Frontend and backend are separate deployable services; the browser never receives service-account credentials.
+- Every protected API route validates JWTs server-side before business logic runs.
+- Firestore Security Rules enforce the same RBAC if a client talks to Firestore directly.
+- Feature-based folders on the frontend (`auth/`, `products/`, `dashboard/`); module-based on the backend (`modules/products`, `modules/admin`, `modules/analytics`).
 
 ---
 
-## Quick Start (< 5 minutes)
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Runtime | Node.js | 20+ |
+| Frontend framework | React | 19.2.7 |
+| Build tool | Vite | 5.4.11 |
+| Language | TypeScript | ~6.0 |
+| Routing | React Router | 7.18.0 |
+| Forms / validation | react-hook-form + Zod | 7.80.0 / 4.4.3 |
+| Styling | Tailwind CSS | 3.4.19 |
+| UI primitives | Radix UI + shadcn/ui | — |
+| Charts | Recharts | 3.9.0 |
+| HTTP client | Axios | 1.18.1 |
+| Auth (client) | Firebase JS SDK | 12.15.0 |
+| Backend | Express | 5.2.1 |
+| Auth (server) | firebase-admin | 13.10.0 |
+| Database | Cloud Firestore | — |
+| AI descriptions | Groq SDK (Llama 3.3 70B) | 1.3.0 |
+| Security | Helmet, CORS, express-rate-limit | 8.2.0 / 8.5.2 |
+| CI | GitHub Actions | — |
+| Frontend hosting | Vercel | — |
+| Backend hosting | Render (free tier) | — |
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
 - npm
-- A Firebase project with **Authentication** (Email/Password) and **Firestore** enabled
+- Firebase project with **Email/Password Auth** and **Firestore** enabled
 
 ### 1. Clone and install
 
@@ -60,38 +99,22 @@ npm run install:all
 
 ### 2. Firebase setup
 
-1. Create a project at [Firebase Console](https://console.firebase.google.com/).
+1. Create a project in the [Firebase Console](https://console.firebase.google.com/).
 2. Enable **Authentication → Email/Password**.
-3. Create a **Firestore** database (production mode is fine; deploy rules from step 4).
-4. Generate a **Web app** config (Project Settings → Your apps) for the frontend.
-5. Create a **Service account** key (Project Settings → Service accounts → Generate new private key) for the backend.
-6. Deploy Firestore rules: `firebase deploy --only firestore:rules` (requires Firebase CLI), or paste `firestore.rules` manually in the console.
+3. Create a **Firestore** database (production mode is fine).
+4. Register a **Web app** and copy config values for the frontend.
+5. Generate a **Service account** private key for the backend.
+6. Deploy rules and indexes:
 
-### 3. Environment files
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
 
-**`backend/.env`** (copy from `backend/.env.example`):
+   Or paste `firestore.rules` manually in the Firebase Console.
 
-```env
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GROQ_API_KEY=your-groq-key          # optional — AI description generation
-```
+### 3. Environment variables
 
-**`frontend/.env`** (copy from `frontend/.env.example`):
-
-```env
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
-VITE_API_BASE_URL=http://localhost:5000
-```
+Copy `backend/.env.example` → `backend/.env` and `frontend/.env.example` → `frontend/.env`. See [Environment variables](#environment-variables) below.
 
 ### 4. Seed the database
 
@@ -100,7 +123,7 @@ cd backend
 npm run seed
 ```
 
-Creates test users, 20 sample products, and a `/meta/seed` marker. Re-runs are skipped automatically if seed already ran.
+Creates both test users, 20 sample products, and a `/meta/seed` marker. Safe to re-run — skipped if seed already completed.
 
 ### 5. Run locally
 
@@ -115,174 +138,251 @@ npm run dev
 
 ---
 
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PORT` | No | HTTP port (default `5000`) |
+| `NODE_ENV` | No | `development` \| `staging` \| `production` |
+| `FRONTEND_URL` | Yes | Allowed CORS origin — `https://saas-dashboard-one-vert.vercel.app` in production |
+| `FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
+| `FIREBASE_CLIENT_EMAIL` | Yes | Service account email |
+| `FIREBASE_PRIVATE_KEY` | Yes | Service account private key (use `\n` for newlines in `.env`) |
+| `GROQ_API_KEY` | No | Groq API key for AI product descriptions; app works without it |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_FIREBASE_API_KEY` | Yes | Firebase Web API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Yes | Auth domain (`<project>.firebaseapp.com`) |
+| `VITE_FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Yes | Storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Yes | FCM sender ID |
+| `VITE_FIREBASE_APP_ID` | Yes | Firebase app ID |
+| `VITE_FIREBASE_MEASUREMENT_ID` | No | Google Analytics measurement ID |
+| `VITE_API_BASE_URL` | Yes | `https://saas-dashboard-backend-0kwm.onrender.com` in production |
+
+> Only `api.client.ts` reads `VITE_API_BASE_URL`. Firebase **Admin** credentials never appear in frontend env vars.
+
+---
+
 ## Project Structure
 
 ```
 saas-dashboard/
 ├── frontend/src/
-│   ├── features/          # Domain modules (products, auth, dashboard)
-│   │   ├── products/      # hooks, components, schemas, utils
-│   │   ├── auth/
-│   │   └── dashboard/
-│   ├── pages/             # Route-level page components
-│   ├── services/          # Axios API clients
-│   ├── components/        # Shared UI (layout, shadcn/ui)
-│   └── router/            # React Router + guards
+│   ├── features/              # auth, products, dashboard
+│   ├── pages/                 # Route entry points
+│   ├── services/              # api.client, product/analytics/auth services
+│   ├── components/            # Layout, shared UI, guards
+│   ├── router/                # React Router + ProtectedRoute / RoleGuard
+│   └── store/                 # AuthContext
 ├── backend/src/
-│   ├── modules/products/  # routes, controller, service, validators, AI
-│   ├── middleware/        # auth, authorize, validate, rate limit
-│   ├── routes/            # analytics, admin
-│   ├── config/            # env, Firebase Admin init
-│   └── scripts/seed.ts    # Database seeding
+│   ├── modules/
+│   │   ├── products/          # routes, controller, service, validators, AI
+│   │   ├── admin/             # set-role
+│   │   └── analytics/         # dashboard metrics
+│   ├── middleware/            # authenticate, authorize, validate, rate limit
+│   ├── config/                # env + Firebase Admin init
+│   └── scripts/seed.ts
 ├── firestore.rules
+├── firestore.indexes.json
+├── firebase.json
+├── DATABASE.md                # Full schema reference
 └── .github/workflows/ci.yml
 ```
-
-**Why feature-based?** Product logic (filters, form, table, toasts) changes together. Grouping by domain keeps related code in one place and makes onboarding faster than hunting across `controllers/` and `components/` trees.
 
 ---
 
 ## Database Schema
 
+Full documentation: **[DATABASE.md](./DATABASE.md)**
+
 ### `/products/{productId}`
 
-| Field       | Type      | Notes                                      |
-|-------------|-----------|--------------------------------------------|
-| name        | string    | 2–100 chars                                |
-| category    | string    | `Electronics`, `Clothing`, `Food`, `Software`, `Home`, `Books`, `Other` |
-| price       | number    | USD, positive, max 999,999.99                |
-| status      | string    | `active` \| `inactive`                     |
-| description | string?   | optional, max 500 chars                      |
-| sku         | string?   | optional, alphanumeric + dashes              |
-| stock       | number?   | optional, non-negative integer               |
-| createdAt   | Timestamp | set on create                              |
-| updatedAt   | Timestamp | set on create/update                       |
-| createdBy   | string    | uid of creating admin                      |
+| Field | Type | Notes |
+|-------|------|-------|
+| `name` | string | 2–100 chars |
+| `category` | string | `Electronics`, `Clothing`, `Food`, `Software`, `Home`, `Books`, `Other` |
+| `price` | number | USD, stored as number (not string) |
+| `status` | string | `active` \| `inactive` |
+| `description` | string? | Optional, max 500 chars |
+| `sku` | string? | Optional |
+| `stock` | number? | Optional inventory count |
+| `createdAt` | Timestamp | `FieldValue.serverTimestamp()` on create |
+| `updatedAt` | Timestamp | `FieldValue.serverTimestamp()` on create/update |
+| `createdBy` | string | Firebase Auth uid of creating admin |
+
+Document **id** is the Firestore auto-generated ID; exposed as `Product.id` in API responses.
 
 ### `/users/{userId}`
 
-| Field     | Type      | Notes                          |
-|-----------|-----------|--------------------------------|
-| uid       | string    | Firebase Auth uid              |
-| email     | string    | user email                     |
-| role      | string    | `admin` or `viewer`            |
-| createdAt | string    | ISO timestamp (seed/register)  |
-| updatedAt | string    | ISO timestamp (role changes)   |
-
-Roles are authoritative in **Firebase Auth custom claims** (`request.auth.token.role`). Firestore `/users` is a readable mirror for the app.
+| Field | Type | Notes |
+|-------|------|-------|
+| `uid` | string | Same as document ID |
+| `email` | string? | From Firebase Auth |
+| `role` | string | `admin` \| `viewer` — mirror of custom claim |
+| `createdAt` | Timestamp? | First write |
+| `updatedAt` | Timestamp | Updated on role changes |
 
 ### `/rate_limits/{userId}`
 
-| Field        | Type      | Notes                                    |
-|--------------|-----------|------------------------------------------|
-| count        | number    | AI requests in current window              |
-| windowStart  | Timestamp | start of the rolling 1-hour window       |
+| Field | Type | Notes |
+|-------|------|-------|
+| `count` | number | AI requests in current window |
+| `windowStart` | Timestamp | Rolling 1-hour window start |
 
-Used by the AI description endpoint (max 10 requests/user/hour).
+Server-only (Admin SDK). Security Rules deny all client access.
 
 ### `/meta/seed`
 
-| Field     | Type      | Notes                    |
-|-----------|-----------|--------------------------|
-| seededAt  | Timestamp | when seed script ran     |
-| version   | number    | seed schema version      |
+| Field | Type | Notes |
+|-------|------|-------|
+| `seededAt` | Timestamp | Seed completion time |
+| `version` | number | Seed schema version |
 
 ---
 
 ## Security Architecture
 
-**End-to-end auth flow**
+### Firebase custom claims (RBAC)
 
-1. User signs in → Firebase Auth issues a short-lived JWT.
-2. React holds the session in memory via the Firebase SDK (`AuthContext`).
-3. Axios interceptor attaches `Authorization: Bearer <token>` on every API request.
-4. Express `authenticate` middleware calls `adminAuth.verifyIdToken()`.
-5. `authorize` middleware checks the `role` custom claim (`admin` | `viewer`).
-6. Controller runs only if both checks pass; otherwise 401/403.
-7. Firestore Security Rules enforce the same role model on any direct DB access.
+Roles are **not** chosen in the UI. On sign-up, the backend assigns `viewer` via `POST /api/admin/set-role` using the Admin SDK (`adminAuth.setCustomUserClaims`). Admins can promote users to `admin`.
 
-**OWASP considerations addressed**
+Claims are embedded in the ID token as `role: 'admin' | 'viewer'`. The frontend reads them with `getIdTokenResult()`; the backend reads them from `verifyIdToken()` output.
 
-| Risk              | Mitigation                                              |
-|-------------------|---------------------------------------------------------|
-| Token exposure    | JWTs in headers only — never in URLs or query strings   |
-| Injection         | Zod validation + string sanitization on backend; Zod on frontend for UX |
-| Brute force / DoS | `express-rate-limit` (100 req / 15 min per IP)          |
-| AI abuse          | Per-user Firestore counter (10 req / hour)              |
-| XSS / clickjacking| Helmet + manual `X-Frame-Options`, `X-Content-Type-Options` |
-| CORS misconfig    | Restricted to `FRONTEND_URL` only                       |
-| Error leakage     | Structured API errors; no stack traces in production responses |
+### `authenticate` + `authorize` middleware
+
+1. **`authenticate`** — Requires `Authorization: Bearer <token>`. Calls `adminAuth.verifyIdToken(token, true)` (includes revocation check). Attaches decoded token to `req.user`.
+2. **`authorize('admin', …)`** — Verifies `req.user.role` is a valid claim and matches allowed roles. Returns `403` if missing or insufficient.
+
+Example: `POST /api/products` runs `authenticate` → `authorize('admin')` → Zod validation → controller.
+
+### Firestore rules (second layer)
+
+The API uses the Admin SDK (bypasses rules for server writes). Rules still protect against **direct client SDK access**:
+
+- **Products:** admins CRUD; viewers read-only
+- **Users:** read own doc; admins read/write all
+- **Rate limits:** deny all client access
+- **Default:** deny everything else
+
+Deploy: `firebase deploy --only firestore:rules`
+
+### OWASP considerations
+
+| Risk | Mitigation |
+|------|------------|
+| Broken access control | Server-side RBAC on every route; UI guards are not trusted alone |
+| Token exposure | JWTs in `Authorization` header only — never in URLs |
+| Injection | Zod validation + string sanitization on backend |
+| Security misconfiguration | CORS locked to `FRONTEND_URL`; Helmet headers |
+| DoS / brute force | `express-rate-limit` (100 req / 15 min per IP); AI rate limit (10 / hour / user) |
+| XSS / clickjacking | Helmet; `X-Frame-Options: DENY` |
+| Information disclosure | Generic error messages; no stack traces in API responses |
 
 ---
 
 ## Role-Based Access Control
 
-| Feature          | Admin | Viewer |
-|------------------|:-----:|:------:|
-| View products    | ✅    | ✅     |
-| View dashboard   | ✅    | ✅     |
-| Create product   | ✅    | ❌     |
-| Edit product     | ✅    | ❌     |
-| Delete product   | ✅    | ❌     |
-| AI description   | ✅    | ❌     |
-| Set user roles   | ✅    | ❌     |
+| Feature | Admin | Viewer |
+|---------|:-----:|:------:|
+| View products | ✅ | ✅ |
+| Add product | ✅ | ❌ |
+| Edit product | ✅ | ❌ |
+| Delete product | ✅ | ❌ |
+| View dashboard | ✅ | ✅ (welcome + browse card) |
+| View revenue / analytics charts | ✅ | ❌ |
+| AI description generation | ✅ | ❌ |
+| Set user roles | ✅ | ❌ |
 
-Enforced in **two places**: UI hides/disables controls (`useRole`, `RoleGuard`), and the API returns **403** if a viewer hits a protected endpoint. UI alone is never sufficient.
-
----
-
-## Trade-offs & Scope Decisions
-
-- **API uses Admin SDK** — backend bypasses Firestore rules during server-side writes. Rules still protect against direct client SDK access; the API is the primary path.
-- **Analytics aggregates computed in-memory** — avoids Firestore composite index / aggregate query complexity at the cost of loading all products server-side. Fine for demo scale; not for millions of rows.
-- **Revenue chart is static mock data** — real revenue-over-time would need order/transaction data we don't model yet.
-- **AI via Groq (Llama 3.3)** — free-tier friendly; quality differs from Claude/GPT. Optional — app works without `GROQ_API_KEY`.
-- **No tests yet** — CI runs lint, typecheck, and build only. Test coverage deferred to stay within time budget.
-- **Single-tenant** — no `organizationId`; all users share one product catalog.
-- **Seed is idempotent** — guarded by `/meta/seed`; won't overwrite existing data on re-run.
+Enforced in **two places**: UI (`useRole`, `RoleGuard`) and API (`authorize` middleware returning **403**).
 
 ---
 
-## What's Next (with another week)
+## Deployment
 
-- **Unit tests** — Jest + React Testing Library (frontend), Supertest (backend)
-- **E2E tests** — Playwright covering login, CRUD, and role enforcement
-- **Real-time updates** — Firestore `onSnapshot` listeners for live product table
-- **Multi-tenancy** — `organizationId` on products + tenant-scoped queries
-- **CSV export** — admin-only product download
-- **Audit log** — `/auditLogs` collection tracking all mutations with actor + diff
-- **Redis rate limiting** — replace in-memory / Firestore counters for production scale
-- **Docker Compose** — one-command local dev with pinned Node + env templates
+### Frontend — Vercel
+
+1. Import the GitHub repo in [Vercel](https://vercel.com/).
+2. Set **Root Directory** to `frontend`.
+3. Add all `VITE_*` environment variables (see table above).
+4. Set `VITE_API_BASE_URL` to `https://saas-dashboard-backend-0kwm.onrender.com`.
+5. Deploy. SPA routing is handled by `frontend/vercel.json`.
+
+### Backend — Render
+
+1. Create a **Web Service** from the same repo; **Root Directory** `backend`.
+2. **Build command:** `npm install && npm run build`
+3. **Start command:** `npm start`
+4. Set backend env vars (`FIREBASE_*`, `FRONTEND_URL`, optional `GROQ_API_KEY`).
+5. Set `FRONTEND_URL` to `https://saas-dashboard-one-vert.vercel.app`.
+
+### Render free tier — cold start
+
+The backend sleeps after inactivity. The **first request after idle can take up to ~60 seconds**. The frontend Axios client uses a **60 s timeout** to accommodate this. Subsequent requests are fast. Upgrade to a paid Render plan or use a keep-alive ping for production demos.
+
+### Firestore
+
+After deploying app code, deploy rules and indexes from your machine:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+Run `npm run seed` once against production Firebase credentials if demo data is needed.
+
+---
+
+## Trade-offs
+
+Honest scope decisions made to ship a complete, reviewable MVP:
+
+| Decision | Rationale |
+|----------|-----------|
+| **Admin SDK for all writes** | Simpler server code; Firestore rules remain defense-in-depth for client SDK |
+| **In-memory text search** | Firestore has no `LIKE`; full-text needs Algolia/Typesense at scale |
+| **Static revenue chart** | No orders/transactions model yet; chart demonstrates UI only |
+| **Analytics loads all product fields** | Fine for demo scale; would use pre-aggregates or BigQuery later |
+| **Groq for AI** | Free-tier friendly; optional feature |
+| **Single tenant** | No `organizationId`; shared catalog |
+| **No automated tests yet** | CI runs typecheck, lint, build; tests deferred (see What's Next) |
+| **Offset pagination** | Simple; cursor-based pagination better at very large scale |
+
+---
+
+## What's Next
+
+With another week, these would be the priorities:
+
+1. **Unit tests** — Jest + React Testing Library (frontend), Supertest (backend)
+2. **E2E tests** — Playwright covering login, CRUD, and role enforcement
+3. **Real-time updates** — Firestore `onSnapshot` listeners for live product table
+4. **Multi-tenancy** — `organizationId` on products + tenant-scoped queries and rules
+5. **Audit log** — `/auditLogs` collection with actor, action, and diff
+6. **Redis for rate limiting** — replace Firestore counters for production scale
+7. **CSV export** — admin-only product download
+8. **Docker Compose** — one-command local dev
 
 ---
 
 ## AI Tool Usage
 
-Claude (Cursor) was used to accelerate scaffolding, security hardening, and UI polish — not to replace understanding.
+Used **Cursor AI** and **Claude** to accelerate development. All code was reviewed, understood, and can be explained line by line in a technical walkthrough.
 
-**How it was used**
-
-- Bootstrapping folder structure, shadcn/ui components, and Express middleware patterns
-- Drafting Zod validators, Firestore rules, and the seed script
-- Implementing AI description generation (Groq integration + rate limiting)
-- Writing GitHub Actions CI and this README
-
-**What was reviewed manually**
-
-- Auth flow and RBAC enforcement (custom claims + middleware + rules alignment)
-- Input sanitization and error response shapes
-- Product filter/search logic and pagination edge cases
-
-Every line in this codebase can be walked through in a technical review. AI output was treated as a first draft — edited, tested, and integrated like any other PR.
+AI helped with scaffolding (folder structure, middleware, Zod validators, Firestore rules, seed script, UI components). Every suggestion was edited, type-checked, and verified manually — especially auth flow, RBAC (claims → middleware → rules), and input validation.
 
 ---
 
 ## CI
 
-GitHub Actions runs on push to `main` / `develop` and on PRs to `main`:
+GitHub Actions on push to `main` / `develop` and PRs to `main`:
 
-- **Frontend** — typecheck, lint, build (with dummy env vars)
-- **Backend** — typecheck, lint
+- **Frontend** — TypeScript, lint, production build
+- **Backend** — TypeScript, lint
 
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 

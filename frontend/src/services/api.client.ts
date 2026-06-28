@@ -8,6 +8,9 @@ import axios, {
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 
+/** Fallback when VITE_API_BASE_URL is unset (local dev only). */
+export const DEFAULT_API_BASE_URL = 'http://localhost:5000'
+
 type ErrorResponseBody = {
   error?: string
   message?: string
@@ -69,17 +72,17 @@ type ApiClient = Omit<
 }
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
+  timeout: 60000, // Render free tier cold start
   headers: { 'Content-Type': 'application/json' },
 })
 
+// Attach a fresh Firebase ID token per request; the SDK caches and auto-refreshes.
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const user = auth.currentUser
 
     if (user) {
-      // Fresh token per request; Firebase SDK caches and auto-refreshes.
       const token = await user.getIdToken()
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -109,3 +112,18 @@ axiosInstance.interceptors.response.use(
 )
 
 export const apiClient = axiosInstance as ApiClient
+
+/** Wraps service calls so unknown failures become typed ApiError instances. */
+export async function withApiErrorHandling<T>(
+  operation: () => Promise<T>,
+  fallbackMessage: string,
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError(fallbackMessage, 'API_ERROR', 500)
+  }
+}

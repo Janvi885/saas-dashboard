@@ -6,7 +6,8 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
-import { assignViewerRole } from '@/lib/auth-api'
+import { assignViewerRole } from '@/services/auth.service'
+import { ApiError as ClientApiError } from '@/services/api.client'
 import { auth } from '@/lib/firebase'
 import type { ApiError } from '@/types'
 
@@ -48,7 +49,11 @@ function mapFirebaseAuthError(error: unknown): ApiError {
   }
 
   if (error instanceof Error) {
-    return createApiError(error.message, 'auth/unknown', 500)
+    return createApiError(
+      'Authentication failed. Please try again.',
+      'auth/unknown',
+      500,
+    )
   }
 
   return createApiError('An unexpected error occurred', 'auth/unknown', 500)
@@ -73,15 +78,16 @@ export async function signUp(
     const { user } = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(user, { displayName })
 
-    // Always assign viewer — no role selection in the UI
     await assignViewerRole(user.uid)
 
-    // Force token refresh so AuthContext picks up the new role claim immediately
     const currentUser = auth.currentUser
     if (currentUser) {
       await currentUser.getIdToken(true)
     }
   } catch (error) {
+    if (error instanceof ClientApiError) {
+      throw createApiError(error.message, error.code, error.statusCode)
+    }
     if (isApiError(error)) {
       throw error
     }

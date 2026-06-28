@@ -22,6 +22,13 @@ function withRequestId(
   return body
 }
 
+export function healthResponse(res: Response): Response {
+  return res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  })
+}
+
 export function errorResponse(
   res: Response,
   message: string,

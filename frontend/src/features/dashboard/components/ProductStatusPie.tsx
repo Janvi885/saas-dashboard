@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 type ProductStatusPieProps = {
   activeCount: number
@@ -14,9 +15,9 @@ type ProductStatusPieProps = {
   loading?: boolean
 }
 
-const COLORS = {
-  active: '#22c55e',
-  inactive: '#94a3b8',
+const LEGEND_DOT_CLASS = {
+  Active: 'bg-green-500',
+  Inactive: 'bg-slate-400',
 } as const
 
 export function ProductStatusPie({
@@ -27,8 +28,8 @@ export function ProductStatusPie({
   const total = activeCount + inactiveCount
 
   const data = [
-    { name: 'Active', value: activeCount, color: COLORS.active },
-    { name: 'Inactive', value: inactiveCount, color: COLORS.inactive },
+    { name: 'Active' as const, value: activeCount, fill: '#22c55e' },
+    { name: 'Inactive' as const, value: inactiveCount, fill: '#94a3b8' },
   ]
 
   if (loading) {
@@ -77,7 +78,7 @@ export function ProductStatusPie({
                     strokeWidth={0}
                   >
                     {data.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell key={entry.name} fill={entry.fill} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -97,8 +98,10 @@ export function ProductStatusPie({
               {data.map((entry) => (
                 <div key={entry.name} className="flex items-center gap-2 text-sm">
                   <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: entry.color }}
+                    className={cn(
+                      'h-3 w-3 rounded-full',
+                      LEGEND_DOT_CLASS[entry.name],
+                    )}
                   />
                   <span className="text-muted-foreground">{entry.name}</span>
                   <span className="font-medium">{entry.value}</span>

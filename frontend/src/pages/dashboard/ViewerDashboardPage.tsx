@@ -23,10 +23,6 @@ export default function ViewerDashboardPage() {
         <p className="mt-1 text-sm text-muted-foreground">Read-only access</p>
       </div>
 
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100">
-        You have viewer access. Contact an admin to make changes.
-      </div>
-
       <Card className="max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">

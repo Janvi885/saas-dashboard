@@ -1,6 +1,7 @@
 import {
   FieldValue,
   type DocumentData,
+  type Query,
   Timestamp,
 } from 'firebase-admin/firestore'
 import { adminDb } from '../../config/firebase'
@@ -15,6 +16,9 @@ import { ANALYTICS_CACHE_KEY, invalidateCache } from '../../utils/cache'
 
 const COLLECTION = 'products'
 
+type SortField = NonNullable<ProductFilters['sortBy']>
+type SortDirection = NonNullable<ProductFilters['sortOrder']>
+
 function toIsoString(value: unknown): string {
   if (value instanceof Timestamp) {
     return value.toDate().toISOString()
@@ -25,12 +29,16 @@ function toIsoString(value: unknown): string {
   return new Date().toISOString()
 }
 
+function toNumber(value: unknown): number {
+  return typeof value === 'number' ? value : Number(value)
+}
+
 function mapDocToProduct(id: string, data: DocumentData): Product {
   return {
     id,
     name: data.name,
     category: data.category,
-    price: data.price,
+    price: toNumber(data.price),
     status: data.status,
     description: data.description,
     sku: data.sku,
@@ -71,8 +79,8 @@ function matchesSearch(product: Product, search?: string): boolean {
 
 function sortProducts(
   products: Product[],
-  sortBy: NonNullable<ProductFilters['sortBy']>,
-  sortOrder: NonNullable<ProductFilters['sortOrder']>,
+  sortBy: SortField,
+  sortOrder: SortDirection,
 ): Product[] {
   const direction = sortOrder === 'asc' ? 1 : -1
 
@@ -88,6 +96,77 @@ function sortProducts(
   })
 }
 
+/** Builds a Firestore query with equality filters and server-side ordering. */
+function buildFilteredQuery(
+  filters: ProductFilters,
+  sortBy: SortField,
+  sortOrder: SortDirection,
+): Query {
+  let query: Query = adminDb.collection(COLLECTION)
+
+  if (filters.category && filters.category !== 'all') {
+    query = query.where('category', '==', filters.category)
+  }
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.where('status', '==', filters.status)
+  }
+
+  return query.orderBy(sortBy, sortOrder)
+}
+
+async function paginateWithFirestoreQuery(
+  filters: ProductFilters,
+  page: number,
+  pageSize: number,
+  sortBy: SortField,
+  sortOrder: SortDirection,
+): Promise<PaginatedProducts> {
+  const query = buildFilteredQuery(filters, sortBy, sortOrder)
+  const countSnapshot = await query.count().get()
+  const total = countSnapshot.data().count
+  const totalPages = Math.ceil(total / pageSize) || 0
+  const offset = (page - 1) * pageSize
+
+  const snapshot = await query.offset(offset).limit(pageSize).get()
+  const products = snapshot.docs.map((doc) =>
+    mapDocToProduct(doc.id, doc.data()),
+  )
+
+  return { products, total, page, pageSize, totalPages }
+}
+
+async function paginateWithInMemorySearch(
+  filters: ProductFilters,
+  page: number,
+  pageSize: number,
+  sortBy: SortField,
+  sortOrder: SortDirection,
+  search: string,
+): Promise<PaginatedProducts> {
+  const query = buildFilteredQuery(filters, sortBy, sortOrder)
+  const snapshot = await query.get()
+
+  let products = snapshot.docs.map((doc) =>
+    mapDocToProduct(doc.id, doc.data()),
+  )
+
+  products = products.filter((product) => matchesSearch(product, search))
+  products = sortProducts(products, sortBy, sortOrder)
+
+  const total = products.length
+  const totalPages = Math.ceil(total / pageSize) || 0
+  const start = (page - 1) * pageSize
+
+  return {
+    products: products.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  }
+}
+
 export async function getProducts(
   filters: ProductFilters,
 ): Promise<PaginatedProducts> {
@@ -95,39 +174,24 @@ export async function getProducts(
     const normalized = normalizeFilters(filters)
     const { page, pageSize, sortBy, sortOrder, search } = normalized
 
-    const snapshot = await adminDb.collection(COLLECTION).get()
-
-    let products = snapshot.docs.map((doc) =>
-      mapDocToProduct(doc.id, doc.data()),
-    )
-
-    if (normalized.category && normalized.category !== 'all') {
-      products = products.filter(
-        (product) => product.category === normalized.category,
+    if (search?.trim()) {
+      return paginateWithInMemorySearch(
+        normalized,
+        page,
+        pageSize,
+        sortBy,
+        sortOrder,
+        search,
       )
     }
 
-    if (normalized.status && normalized.status !== 'all') {
-      products = products.filter(
-        (product) => product.status === normalized.status,
-      )
-    }
-
-    products = products.filter((product) => matchesSearch(product, search))
-    products = sortProducts(products, sortBy, sortOrder)
-
-    const total = products.length
-    const totalPages = Math.ceil(total / pageSize) || 0
-    const start = (page - 1) * pageSize
-    const paginated = products.slice(start, start + pageSize)
-
-    return {
-      products: paginated,
-      total,
+    return paginateWithFirestoreQuery(
+      normalized,
       page,
       pageSize,
-      totalPages,
-    }
+      sortBy,
+      sortOrder,
+    )
   } catch (err) {
     if (err instanceof AppError) throw err
     throw new AppError('Failed to fetch products', 'FIRESTORE_ERROR', 500)

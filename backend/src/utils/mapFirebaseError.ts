@@ -38,6 +38,12 @@ export function mapFirebaseError(error: unknown): MappedFirebaseError {
         code: 'TOKEN_EXPIRED',
         statusCode: 401,
       }
+    case 'auth/id-token-revoked':
+      return {
+        message: 'Session revoked. Please sign in again.',
+        code: 'TOKEN_REVOKED',
+        statusCode: 401,
+      }
     case 'auth/invalid-id-token':
       return {
         message: 'Invalid authentication token',

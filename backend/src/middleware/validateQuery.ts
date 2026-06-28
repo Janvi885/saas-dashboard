@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
 import { ZodError, type ZodType } from 'zod'
-import type { ProductFiltersQuery } from '../schemas/product.schema'
+import type { ProductFiltersInput } from '../modules/products/product.validators'
 import { errorResponse } from '../utils/apiResponse'
 import { log } from '../utils/logger'
 
-export function validateQuery(schema: ZodType) {
+/** Validates URL query params with Zod; attaches parsed result to req.validatedQuery. */
+export function validateQuery(schema: ZodType<ProductFiltersInput>) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.query)
 
@@ -14,7 +15,7 @@ export function validateQuery(schema: ZodType) {
       return
     }
 
-    req.validatedQuery = result.data as ProductFiltersQuery
+    req.validatedQuery = result.data
     next()
   }
 }

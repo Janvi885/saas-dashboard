@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticate } from '../../middleware/authenticate'
 import { authorize } from '../../middleware/authorize'
 import { validate } from '../../middleware/validate'
+import { validateQuery } from '../../middleware/validateQuery'
 import {
   createProduct,
   deleteProduct,
@@ -13,6 +14,7 @@ import {
 import {
   aiDescriptionSchema,
   productCreateSchema,
+  productFiltersSchema,
   productUpdateSchema,
 } from './product.validators'
 
@@ -22,6 +24,7 @@ router.get(
   '/',
   authenticate,
   authorize('admin', 'viewer'),
+  validateQuery(productFiltersSchema),
   getProducts,
 )
 

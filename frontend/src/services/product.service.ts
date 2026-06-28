@@ -1,10 +1,11 @@
+import { API_ROUTES } from '@/constants/api.routes'
 import type {
   PaginatedProducts,
   Product,
   ProductFilters,
   ProductInput,
 } from '@/types'
-import { apiClient } from './api.client'
+import { apiClient, withApiErrorHandling } from './api.client'
 
 function buildQueryParams(
   filters?: ProductFilters,
@@ -43,34 +44,52 @@ function buildQueryParams(
 export async function getProducts(
   filters?: ProductFilters,
 ): Promise<PaginatedProducts> {
-  return apiClient.get<PaginatedProducts>('/api/products', {
-    params: buildQueryParams(filters),
-  })
+  return withApiErrorHandling(
+    () =>
+      apiClient.get<PaginatedProducts>(API_ROUTES.products, {
+        params: buildQueryParams(filters),
+      }),
+    'Failed to fetch products',
+  )
 }
 
 export async function getProductById(id: string): Promise<Product> {
-  const data = await apiClient.get<{ product: Product }>(`/api/products/${id}`)
-  return data.product
+  return withApiErrorHandling(async () => {
+    const data = await apiClient.get<{ product: Product }>(
+      API_ROUTES.productById(id),
+    )
+    return data.product
+  }, 'Failed to fetch product')
 }
 
 export async function createProduct(data: ProductInput): Promise<Product> {
-  const result = await apiClient.post<{ product: Product }>('/api/products', data)
-  return result.product
+  return withApiErrorHandling(async () => {
+    const result = await apiClient.post<{ product: Product }>(
+      API_ROUTES.products,
+      data,
+    )
+    return result.product
+  }, 'Failed to create product')
 }
 
 export async function updateProduct(
   id: string,
   data: Partial<ProductInput>,
 ): Promise<Product> {
-  const result = await apiClient.put<{ product: Product }>(
-    `/api/products/${id}`,
-    data,
-  )
-  return result.product
+  return withApiErrorHandling(async () => {
+    const result = await apiClient.put<{ product: Product }>(
+      API_ROUTES.productById(id),
+      data,
+    )
+    return result.product
+  }, 'Failed to update product')
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  await apiClient.delete(`/api/products/${id}`)
+  return withApiErrorHandling(
+    () => apiClient.delete(API_ROUTES.productById(id)),
+    'Failed to delete product',
+  )
 }
 
 export async function generateProductDescription(params: {
@@ -78,9 +97,11 @@ export async function generateProductDescription(params: {
   category: string
   price: number
 }): Promise<string> {
-  const result = await apiClient.post<{ description: string }>(
-    '/api/products/ai-description',
-    params,
-  )
-  return result.description
+  return withApiErrorHandling(async () => {
+    const result = await apiClient.post<{ description: string }>(
+      API_ROUTES.aiDescription,
+      params,
+    )
+    return result.description
+  }, 'Failed to generate description')
 }

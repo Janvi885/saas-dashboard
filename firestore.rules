@@ -90,11 +90,11 @@ service cloud.firestore {
     }
 
     // ── /rate_limits/{userId} ────────────────────────────────────────────
-    // Optional per-user rate-limit counters (e.g. client-side or Cloud Function).
-    // Each user may only read/write their own rate_limit document.
+    // AI rate-limit counters — written only by the backend via Admin SDK.
+    // Deny all client access so users cannot reset or spoof their limits.
 
     match /rate_limits/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if false;
     }
 
     // ── Deny everything else ─────────────────────────────────────────────

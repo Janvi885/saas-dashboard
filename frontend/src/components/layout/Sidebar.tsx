@@ -3,13 +3,14 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Plus,
   X,
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { useSignOut } from '@/features/auth/hooks/useAuth'
+import { useSignOut } from '@/features/auth/hooks/authActions'
 import { useRole } from '@/hooks/useRole'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/AuthContext'
@@ -118,6 +119,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               </Link>
             )
           })}
+
+          {isAdmin && (
+            <Link to="/products/new" onClick={onClose}>
+              <Button
+                variant={
+                  location.pathname === '/products/new' ? 'secondary' : 'ghost'
+                }
+                className="w-full justify-start gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Product
+              </Button>
+            </Link>
+          )}
         </nav>
 
         <div className="space-y-3 border-t p-4">

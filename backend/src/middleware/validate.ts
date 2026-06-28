@@ -3,6 +3,7 @@ import { ZodError, type ZodType } from 'zod'
 import { errorResponse } from '../utils/apiResponse'
 import { log } from '../utils/logger'
 
+/** Validates JSON request bodies with Zod; replaces req.body with parsed output. */
 export function validate(schema: ZodType) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body)

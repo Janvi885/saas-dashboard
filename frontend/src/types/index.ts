@@ -1,10 +1,20 @@
 export type UserRole = 'admin' | 'viewer'
 
+export const VALID_USER_ROLES: readonly UserRole[] = ['admin', 'viewer'] as const
+
+export function isUserRole(value: unknown): value is UserRole {
+  return (
+    typeof value === 'string' &&
+    (VALID_USER_ROLES as readonly string[]).includes(value)
+  )
+}
+
 export type AuthUser = {
   uid: string
   email: string | null
   displayName: string | null
-  role: UserRole
+  /** From Firebase custom claim only — never inferred client-side. */
+  role: UserRole | null
   emailVerified: boolean
 }
 

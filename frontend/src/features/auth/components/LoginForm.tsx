@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { FormFieldLabel } from '@/components/form/FormFieldLabel'
-import { signIn } from '@/features/auth/hooks/useAuth'
+import { signIn } from '@/features/auth/hooks/authActions'
 import {
   loginSchema,
   type LoginFormData,

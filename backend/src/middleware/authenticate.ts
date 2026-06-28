@@ -5,6 +5,10 @@ import { errorResponse } from '../utils/apiResponse'
 import { log } from '../utils/logger'
 import { mapFirebaseError } from '../utils/mapFirebaseError'
 
+/**
+ * Verifies Firebase ID tokens from Authorization: Bearer headers.
+ * The second argument to verifyIdToken enables revocation checks.
+ */
 export async function authenticate(
   req: Request,
   res: Response,

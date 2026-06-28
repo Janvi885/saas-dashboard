@@ -29,12 +29,10 @@ import { ProductStatusPie } from '@/features/dashboard/components/ProductStatusP
 import { RevenueChart } from '@/features/dashboard/components/RevenueChart'
 import { useAnalytics } from '@/features/dashboard/hooks/useAnalytics'
 import { useProducts } from '@/features/products/hooks/useProducts'
-import { useRole } from '@/hooks/useRole'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 
 export default function AdminDashboardPage() {
-  const { isAdmin, isViewer } = useRole()
   const { metrics, loading: metricsLoading, error: metricsError } = useAnalytics()
   const {
     products: recentProducts,
@@ -51,26 +49,16 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description={
-          isAdmin ? 'Full business overview' : 'Read-only product overview'
-        }
+        description="Full business overview"
         actions={
-          isAdmin ? (
-            <Link to="/products/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Product
-              </Button>
-            </Link>
-          ) : undefined
+          <Link to="/products/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </Link>
         }
       />
-
-      {isViewer && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
-          You have viewer access. Contact an admin to make changes.
-        </div>
-      )}
 
       {metricsError && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">

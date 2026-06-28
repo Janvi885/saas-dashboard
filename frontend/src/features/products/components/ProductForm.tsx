@@ -23,21 +23,11 @@ import {
 import {
   productFormSchema,
   PRODUCT_CATEGORIES,
-  toProductInput,
   type ProductFormValues,
 } from '@/features/products/schemas/product.schema'
-import {
-  showApiErrorToast,
-  showProductCreatedToast,
-  showProductUpdatedToast,
-} from '@/features/products/utils/productToasts'
+import { useProductForm } from '@/features/products/hooks/useProductForm'
 import { useRole } from '@/hooks/useRole'
 import { cn } from '@/lib/utils'
-import {
-  createProduct,
-  generateProductDescription,
-  updateProduct,
-} from '@/services/product.service'
 import type { Product } from '@/types'
 
 const FIELD_TOOLTIPS = {
@@ -74,9 +64,9 @@ function toFormValues(product?: Product): ProductFormValues {
 }
 
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
-  const isEdit = Boolean(product)
   const { isAdmin } = useRole()
-  const [generatingDescription, setGeneratingDescription] = useState(false)
+  const { isEdit, generatingDescription, saveProduct, generateDescription } =
+    useProductForm({ product, onSuccess })
   const [aiGenerated, setAiGenerated] = useState(false)
 
   const form = useForm<ProductFormValues>({
@@ -93,24 +83,10 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const canGenerateAi = Boolean(name?.trim() && category)
 
   async function onSubmit(values: ProductFormValues) {
-    const payload = toProductInput(values)
-
     try {
-      if (isEdit && product) {
-        await updateProduct(product.id, payload)
-        showProductUpdatedToast()
-      } else {
-        await createProduct(payload)
-        showProductCreatedToast()
-      }
-      onSuccess()
-    } catch (err) {
-      showApiErrorToast(
-        err,
-        isEdit
-          ? 'Could not update the product. Please try again.'
-          : 'Could not create the product. Please try again.',
-      )
+      await saveProduct(values)
+    } catch {
+      // Toast handled in hook
     }
   }
 
@@ -119,20 +95,16 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       return
     }
 
-    setGeneratingDescription(true)
-
     try {
-      const description = await generateProductDescription({
+      const description = await generateDescription({
         name: name.trim(),
         category,
         price: typeof price === 'number' ? price : 0,
       })
       form.setValue('description', description, { shouldDirty: true })
       setAiGenerated(true)
-    } catch (err) {
-      showApiErrorToast(err, 'Could not generate a description. Please try again.')
-    } finally {
-      setGeneratingDescription(false)
+    } catch {
+      // Toast handled in hook
     }
   }
 

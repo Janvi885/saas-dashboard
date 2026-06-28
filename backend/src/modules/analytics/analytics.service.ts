@@ -1,7 +1,7 @@
-import { adminDb } from '../config/firebase'
-import type { AnalyticsMetrics, ProductCategory } from '../types'
-import { AppError } from '../utils/AppError'
-import { log } from '../utils/logger'
+import { adminDb } from '../../config/firebase'
+import type { AnalyticsMetrics, ProductCategory } from '../../types'
+import { AppError } from '../../utils/AppError'
+import { log } from '../../utils/logger'
 
 const COLLECTION = 'products'
 

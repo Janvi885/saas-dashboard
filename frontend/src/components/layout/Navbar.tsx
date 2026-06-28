@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useSignOut } from '@/features/auth/hooks/useAuth'
+import { useSignOut } from '@/features/auth/hooks/authActions'
 import { useRole } from '@/hooks/useRole'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/AuthContext'

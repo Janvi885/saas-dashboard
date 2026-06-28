@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -14,81 +13,26 @@ import {
 import { useBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { DeleteProductDialog } from '@/features/products/components/DeleteProductDialog'
 import { ProductForm } from '@/features/products/components/ProductForm'
+import { useProduct } from '@/features/products/hooks/useProduct'
 import { useRole } from '@/hooks/useRole'
-import {
-  showApiErrorToast,
-  showProductDeletedToast,
-} from '@/features/products/utils/productToasts'
-import { ApiError } from '@/services/api.client'
-import { deleteProduct, getProductById } from '@/services/product.service'
-import type { Product } from '@/types'
 import { formatCurrency, formatDate } from '@/utils/formatters'
+import { useState } from 'react'
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { isAdmin } = useRole()
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { product, loading, error, deleting, deleteProduct } = useProduct(id)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
   useBreadcrumbLabel(product?.name ?? null)
 
-  useEffect(() => {
-    if (!id) {
-      setLoading(false)
-      setError('Product not found')
-      return
-    }
-
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const data = await getProductById(id!)
-        if (!cancelled) {
-          setProduct(data)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err instanceof ApiError
-              ? err.message
-              : 'Failed to load product'
-          setError(message)
-          showApiErrorToast(err, 'Failed to load product')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
   async function handleDelete() {
-    if (!product) return
-
-    setDeleting(true)
     try {
-      await deleteProduct(product.id)
-      showProductDeletedToast()
+      await deleteProduct()
       navigate('/products')
-    } catch (err) {
-      showApiErrorToast(err, 'Could not delete the product.')
-    } finally {
-      setDeleting(false)
+    } catch {
+      // Toast handled in hook
     }
   }
 

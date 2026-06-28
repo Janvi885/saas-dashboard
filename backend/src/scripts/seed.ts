@@ -1,10 +1,11 @@
 import 'dotenv/config'
-import { FieldValue, Timestamp } from 'firebase-admin/firestore'
+import { FieldValue } from 'firebase-admin/firestore'
 import { FirebaseAuthError } from 'firebase-admin/auth'
 import { adminAuth, adminDb } from '../config/firebase'
 import type { ProductCategory, ProductStatus } from '../types'
 
-const SEED_META_DOC = 'meta/seed'
+const SEED_META_COLLECTION = 'meta'
+const SEED_META_DOC_ID = 'seed'
 const SEED_VERSION = 1
 
 type SeedUser = {
@@ -249,15 +250,11 @@ function isEmailAlreadyExists(error: unknown): boolean {
   )
 }
 
-function randomDateWithinLastSixMonths(): Date {
-  const now = Date.now()
-  const sixMonthsMs = 180 * 24 * 60 * 60 * 1000
-  const start = now - sixMonthsMs
-  return new Date(start + Math.random() * (now - start))
-}
-
 async function hasSeedRun(): Promise<boolean> {
-  const doc = await adminDb.collection('meta').doc('seed').get()
+  const doc = await adminDb
+    .collection(SEED_META_COLLECTION)
+    .doc(SEED_META_DOC_ID)
+    .get()
   return doc.exists
 }
 
@@ -292,7 +289,8 @@ async function ensureUser(user: SeedUser): Promise<string> {
         uid,
         email: user.email,
         role: user.role,
-        createdAt: new Date().toISOString(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     )
@@ -306,12 +304,10 @@ async function seedProducts(createdBy: string): Promise<void> {
   console.log(`  Seeding ${SEED_PRODUCTS.length} products...`)
 
   for (const product of SEED_PRODUCTS) {
-    const createdAt = Timestamp.fromDate(randomDateWithinLastSixMonths())
-
     await collection.add({
       ...product,
-      createdAt,
-      updatedAt: createdAt,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       createdBy,
     })
   }
@@ -325,18 +321,20 @@ async function seedProducts(createdBy: string): Promise<void> {
 }
 
 async function markSeedComplete(): Promise<void> {
-  await adminDb.collection('meta').doc('seed').set({
+  await adminDb.collection(SEED_META_COLLECTION).doc(SEED_META_DOC_ID).set({
     seededAt: FieldValue.serverTimestamp(),
     version: SEED_VERSION,
   })
-  console.log('  Wrote /meta/seed marker document')
+  console.log(`  Wrote /${SEED_META_COLLECTION}/${SEED_META_DOC_ID} marker document`)
 }
 
 async function seed(): Promise<void> {
   console.log('🌱 Starting database seed...')
 
   if (await hasSeedRun()) {
-    console.log('⏭️  Seed already ran (found /meta/seed) — skipping')
+    console.log(
+      `⏭️  Seed already ran (found /${SEED_META_COLLECTION}/${SEED_META_DOC_ID}) — skipping`,
+    )
     return
   }
 

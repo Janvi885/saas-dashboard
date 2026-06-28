@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+/**
+ * Product request schemas with string sanitization.
+ * Rejects HTML/script tags and common SQL-injection patterns in text fields.
+ */
 const SCRIPT_TAG_PATTERN = /<script[\s\S]*?>[\s\S]*?<\/script>/i
 const HTML_TAG_PATTERN = /<[^>]+>/
 const SQL_INJECTION_PATTERN =

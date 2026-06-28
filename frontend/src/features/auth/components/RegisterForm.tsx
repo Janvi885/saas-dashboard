@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { signUp } from '@/features/auth/hooks/useAuth'
+import { signUp } from '@/features/auth/hooks/authActions'
 import {
   registerSchema,
   type RegisterFormData,

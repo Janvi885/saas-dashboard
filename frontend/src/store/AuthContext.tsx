@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import type { AuthUser, UserRole } from '@/types'
+import { isUserRole, type AuthUser } from '@/types'
 
 type AuthContextValue = {
   user: AuthUser | null
@@ -19,16 +19,21 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 async function buildAuthUser(firebaseUser: User): Promise<AuthUser> {
-  // Read custom claim from ID token; default to viewer for new sign-ups
-  const tokenResult = await firebaseUser.getIdTokenResult()
-  const role = (tokenResult.claims.role as UserRole | undefined) ?? 'viewer'
+  try {
+    const tokenResult = await firebaseUser.getIdTokenResult()
+    const role = isUserRole(tokenResult.claims.role)
+      ? tokenResult.claims.role
+      : null
 
-  return {
-    uid: firebaseUser.uid,
-    email: firebaseUser.email,
-    displayName: firebaseUser.displayName,
-    role,
-    emailVerified: firebaseUser.emailVerified,
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName,
+      role,
+      emailVerified: firebaseUser.emailVerified,
+    }
+  } catch {
+    throw new Error('Failed to read auth token claims')
   }
 }
 
@@ -48,11 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
 
         setUser(await buildAuthUser(firebaseUser))
         setError(null)
-      } catch (err) {
+      } catch {
         setUser(null)
-        setError(
-          err instanceof Error ? err.message : 'Failed to resolve auth state',
-        )
+        setError('Failed to resolve auth state. Please sign in again.')
       } finally {
         setLoading(false)
       }

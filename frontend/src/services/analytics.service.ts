@@ -1,6 +1,10 @@
+import { API_ROUTES } from '@/constants/api.routes'
 import type { AnalyticsMetrics } from '@/types'
-import { apiClient } from './api.client'
+import { apiClient, withApiErrorHandling } from './api.client'
 
 export async function getAnalytics(): Promise<AnalyticsMetrics> {
-  return apiClient.get<AnalyticsMetrics>('/api/analytics')
+  return withApiErrorHandling(
+    () => apiClient.get<AnalyticsMetrics>(API_ROUTES.analytics),
+    'Failed to fetch analytics',
+  )
 }

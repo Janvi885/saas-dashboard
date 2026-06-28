@@ -1,0 +1,146 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "price", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "price", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "price", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "price", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

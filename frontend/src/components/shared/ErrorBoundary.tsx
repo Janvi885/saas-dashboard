@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { logClientError } from '@/utils/logger'
 
 type ErrorBoundaryProps = {
   children: ReactNode
@@ -24,7 +25,7 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('Uncaught render error:', error, errorInfo)
+    logClientError('Uncaught render error:', error, errorInfo)
   }
 
   handleRetry = (): void => {

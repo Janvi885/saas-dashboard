@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { showApiErrorToast } from '@/features/products/utils/productToasts'
 import { ApiError } from '@/services/api.client'
 import { getAnalytics } from '@/services/analytics.service'
 import { useAuth } from '@/store/AuthContext'
@@ -30,11 +31,12 @@ export function useAnalytics(): UseAnalyticsResult {
       const data = await getAnalytics()
       setMetrics(data)
     } catch (err) {
-      setError(
+      const apiError =
         err instanceof ApiError
           ? err
-          : new ApiError('Failed to load analytics', 'FETCH_FAILED', 500),
-      )
+          : new ApiError('Failed to load analytics', 'FETCH_FAILED', 500)
+      setError(apiError)
+      showApiErrorToast(err, 'Failed to load analytics')
     } finally {
       setLoading(false)
     }
